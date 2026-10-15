@@ -14,6 +14,7 @@ from mediapipe.tasks.python import vision
 
 from camera_test import open_camera, CAMERA_INDEX
 from drawing import draw_hands, draw_hud
+from fingers import fingers_up
 
 MODEL_PATH = os.path.join("models", "hand_landmarker.task")
 MODEL_URL = ("https://storage.googleapis.com/mediapipe-models/hand_landmarker/"
@@ -71,8 +72,10 @@ def main() -> None:
             result = landmarker.detect_for_video(mp_image, ts)
 
             hands = [
-                (lms, real_handedness(hd[0].category_name))
-                for lms, hd in zip(result.hand_landmarks, result.handedness)
+                (lms, real_handedness(hd[0].category_name), fingers_up(world))
+                for lms, world, hd in zip(result.hand_landmarks,
+                                          result.hand_world_landmarks,
+                                          result.handedness)
             ]
             draw_hands(frame, hands)
 
