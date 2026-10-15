@@ -30,7 +30,7 @@ python camera_test.py
 
 ## Roadmap
 - [x] Camera capture
-- [ ] Hand landmark tracking
+- [x] Hand landmark tracking
 - [ ] Gesture classification
 - [ ] Gesture → sound mapping
 - [ ] Demo GIF
