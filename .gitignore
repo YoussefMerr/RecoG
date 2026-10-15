@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Editors / OS
+.vscode/
+.idea/
+Thumbs.db
+desktop.ini
+
+# Models & recordings (downloaded or generated, not source)
+models/*.task
+recordings/
+*.mp4
+*.avi
+
+# Secrets
+.env
