@@ -66,34 +66,44 @@ def pill(frame, text: str, org: tuple[int, int], scale: float = 0.55,
     cv2.putText(frame, text, (x + pad, y + pad + th), FONT, scale, WHITE, 1, AA)
 
 
+def _dim(color, factor: float = 0.35):
+    return tuple(int(c * factor) for c in color)
+
+
 def draw_hands(frame, hands) -> None:
-    """hands = list of (landmarks, label). Draws glow + crisp skeleton."""
+    """hands = list of (landmarks, label, up) where up = {"thumb": bool, ...}.
+    Fingers that are up glow; folded fingers are drawn dim."""
     h, w = frame.shape[:2]
-    all_points = [(to_pixels(lms, w, h), label) for lms, label in hands]
+    all_points = [(to_pixels(lms, w, h), label, up) for lms, label, up in hands]
     if not all_points:
         return
 
-    # 1) glow layer: thick lines on black, blurred, added to the frame
+    # 1) glow layer: only raised fingers glow
     glow = np.zeros_like(frame)
-    for points, _ in all_points:
+    for points, _, up in all_points:
         for name, chain in FINGERS.items():
-            _polyline(glow, points, chain, COLORS[name], 8)
+            if up[name]:
+                _polyline(glow, points, chain, COLORS[name], 8)
     _add_glow(frame, glow)
 
     # 2) crisp thin lines + joints on top
-    for points, label in all_points:
+    for points, label, up in all_points:
         _polyline(frame, points, PALM, PALM_COLOR, 1)
         for name, chain in FINGERS.items():
-            _polyline(frame, points, chain, COLORS[name], 2)
+            color = COLORS[name] if up[name] else _dim(COLORS[name])
+            joint = WHITE if up[name] else _dim(WHITE, 0.5)
+            _polyline(frame, points, chain, color, 2)
             for i in chain:
                 if i in FINGERTIPS:
-                    cv2.circle(frame, points[i], 5, COLORS[name], -1, AA)
-                    cv2.circle(frame, points[i], 9, WHITE, 1, AA)
+                    cv2.circle(frame, points[i], 5, color, -1, AA)
+                    if up[name]:
+                        cv2.circle(frame, points[i], 9, WHITE, 1, AA)
                 else:
-                    cv2.circle(frame, points[i], 3, WHITE, -1, AA)
+                    cv2.circle(frame, points[i], 3, joint, -1, AA)
 
         wx, wy = points[0]
-        pill(frame, label, (wx, wy + 14), scale=0.5, center=True)
+        pill(frame, f"{label}  {sum(up.values())}", (wx, wy + 14),
+             scale=0.5, center=True)
 
 
 def draw_hud(frame, fps: float, hand_count: int) -> None:
